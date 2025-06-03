@@ -16,7 +16,16 @@ Including another URLconf
 """
 
 from django.urls import path
+from . import views
 
 urlpatterns = [
-    # path("admin/", admin.site.urls),
+    path("signup/", views.SignupView.as_view(), name="signup"),
+    path("login/", views.LoginView.as_view(), name="login"),
+    path("upload_file/", views.GetExcellFileView.as_view(), name="upload_file"),
+    path(
+        "verify_linkedin/", views.VerifyLinkedInView.as_view(), name="verify_linkedin"
+    ),
+    path("verify_tiktok/", views.VerifyTikTokView.as_view(), name="verify_tiktok"),
+    path("get_x_auth/", views.GetXAuthorizationURLView.as_view(), name="get_x_auth"),
+    path("verify_x/", views.VerifyTwitterView.as_view(), name="verify_x"),
 ]

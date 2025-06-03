@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from decouple import config
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -42,6 +44,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "corsheaders",
+    "django_celery_beat",
     "socialmedia",
 ]
 
@@ -127,3 +130,51 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+LINKEDIN_CLIENT_ID = config("LINKEDIN_CLIENT_ID")
+LINKEDIN_CLIENT_SECRET = config("LINKEDIN_CLIENT_SECRET")
+LINKEDIN_REDIRECT_URL = ""
+LINKEDIN_BASE_URL = "https://www.linkedin.com/"
+LINKEDIN_API_URL = "https://api.linkedin.com/"
+
+TIKTOK_CLIENT_ID = config("TIKTOK_CLIENT_ID")
+TIKTOK_CLIENT_SECRET = config("TIKTOK_CLIENT_SECRET")
+TIKTOK_BASE_URL = "https://www.tiktok.com/v2/"
+TIKTOK_API_URL = "https://open.tiktokapis.com/v2/"
+TIKTOK_REDIRECT_URL = ""
+
+X_CONSUMER_ID = config("X_CONSUMER_ID")
+X_CONSUMER_SECRET = config("X_CONSUMER_SECRET")
+X_BASE_URL = "https://www.x.com/"
+X_API_URL = "https://api.x.com/"
+TWITTER_BASED_API_URL = "https://api.twitter.com/"
+X_UPLOAD_URL = "https://upload.x.com/"
+X_REDIRECT_URL = "https://73a2-129-208-125-202.ngrok-free.app/x_success"
+
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
+CELERY_ACCEPT_CONTENT = ["application/json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "UTC"
+# CELERY_BEAT_SCHEDULE = {
+#     'check_linkedin_tokens': {
+#         'task': 'socialmedia.tasks.check_linkedin_tokens',
+#         'schedule': crontab(minute='*/30'),  # Every 30 minutes
+#     },
+#     'check_tiktok_tokens': {
+#         'task': 'socialmedia.tasks.check_tiktok_tokens',
+#         'schedule': crontab(minute='*/30'),  # Every 30 minutes
+#     },
+#     'check_x_tokens': {
+#         'task': 'socialmedia.tasks.check_x_tokens',
+#         'schedule': crontab(minute='*/30'),  # Every 30 minutes
+#     },
+# }
+CELERY_BEAT_SCHEDULE = {
+    "sample_task": {
+        "task": "socialmedia.tasks.sample_task",
+        "schedule": crontab(minute="*/1"),
+    },
+}

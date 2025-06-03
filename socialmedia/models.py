@@ -7,45 +7,46 @@ from .enums import PostStatus, PostType
 
 class Linkedin(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    profile_id = models.CharField(max_length=50, blank=False, null=False)
-    access_token = models.CharField(max_length=1000, null=False, blank=False)
-    long_live_access_token = models.CharField(max_length=1000, null=False, blank=False)
-    refresh_token = models.CharField(max_length=1000, null=False, blank=False)
+    profile_id = models.CharField(max_length=50, blank=True, null=True)
+    access_token = models.CharField(max_length=1000, null=True, blank=True)
+    long_live_access_token = models.CharField(max_length=1000, null=True, blank=True)
+    refresh_token = models.CharField(max_length=1000, null=True, blank=True)
     token_expires_on = models.DateTimeField()
     is_authenticated = models.BooleanField(default=False)
     requires_auth = models.BooleanField(default=True)
+    refresh_token_expires_in = models.IntegerField(null=True, blank=True)
 
 
 class X(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    profile_id = models.CharField(max_length=50, blank=False, null=False)
-    access_token = models.CharField(max_length=1000, null=False, blank=False)
-    long_live_access_token = models.CharField(max_length=1000, null=False, blank=False)
-    refresh_token = models.CharField(max_length=1000, null=False, blank=False)
-    token_expires_on = models.DateTimeField()
+    profile_id = models.CharField(max_length=50, blank=True, null=True)
+    access_token = models.CharField(max_length=1000, null=True, blank=True)
+    access_token_secret = models.CharField(max_length=1000, null=True, blank=True)
     is_authenticated = models.BooleanField(default=False)
     requires_auth = models.BooleanField(default=True)
 
 
 class Instagram(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    profile_id = models.CharField(max_length=50, blank=False, null=False)
-    access_token = models.CharField(max_length=1000, null=False, blank=False)
-    long_live_access_token = models.CharField(max_length=1000, null=False, blank=False)
-    refresh_token = models.CharField(max_length=1000, null=False, blank=False)
+    profile_id = models.CharField(max_length=50, blank=True, null=True)
+    access_token = models.CharField(max_length=1000, null=True, blank=True)
+    long_live_access_token = models.CharField(max_length=1000, null=True, blank=True)
+    refresh_token = models.CharField(max_length=1000, null=True, blank=True)
     token_expires_on = models.DateTimeField()
     is_authenticated = models.BooleanField(default=False)
     requires_auth = models.BooleanField(default=True)
+    refresh_token_expires_in = models.IntegerField(null=True, blank=True)
 
 
 class TikTok(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    access_token = models.CharField(max_length=1000, null=False, blank=False)
-    long_live_access_token = models.CharField(max_length=1000, null=False, blank=False)
-    refresh_token = models.CharField(max_length=1000, null=False, blank=False)
+    access_token = models.CharField(max_length=1000, null=True, blank=True)
+    long_live_access_token = models.CharField(max_length=1000, null=True, blank=True)
+    refresh_token = models.CharField(max_length=1000, null=True, blank=True)
     token_expires_on = models.DateTimeField()
     is_authenticated = models.BooleanField(default=False)
     requires_auth = models.BooleanField(default=True)
+    refresh_token_expires_in = models.IntegerField(null=True, blank=True)
 
 
 class PostedContent(models.Model):
