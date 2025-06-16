@@ -134,7 +134,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LINKEDIN_CLIENT_ID = config("LINKEDIN_CLIENT_ID")
 LINKEDIN_CLIENT_SECRET = config("LINKEDIN_CLIENT_SECRET")
-LINKEDIN_REDIRECT_URL = ""
+LINKEDIN_REDIRECT_URL = "https://fe71-188-55-169-8.ngrok-free.app/success"
 LINKEDIN_BASE_URL = "https://www.linkedin.com/"
 LINKEDIN_API_URL = "https://api.linkedin.com/"
 
@@ -142,7 +142,7 @@ TIKTOK_CLIENT_ID = config("TIKTOK_CLIENT_ID")
 TIKTOK_CLIENT_SECRET = config("TIKTOK_CLIENT_SECRET")
 TIKTOK_BASE_URL = "https://www.tiktok.com/v2/"
 TIKTOK_API_URL = "https://open.tiktokapis.com/v2/"
-TIKTOK_REDIRECT_URL = ""
+TIKTOK_REDIRECT_URL = "https://fe71-188-55-169-8.ngrok-free.app/tiktok_success/"
 
 X_CONSUMER_ID = config("X_CONSUMER_ID")
 X_CONSUMER_SECRET = config("X_CONSUMER_SECRET")
@@ -150,7 +150,7 @@ X_BASE_URL = "https://www.x.com/"
 X_API_URL = "https://api.x.com/"
 TWITTER_BASED_API_URL = "https://api.twitter.com/"
 X_UPLOAD_URL = "https://upload.x.com/"
-X_REDIRECT_URL = "https://73a2-129-208-125-202.ngrok-free.app/x_success"
+X_REDIRECT_URL = "https://fe71-188-55-169-8.ngrok-free.app/x_success"
 
 CELERY_BROKER_URL = "redis://localhost:6379/0"
 CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
@@ -158,23 +158,17 @@ CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "UTC"
-# CELERY_BEAT_SCHEDULE = {
-#     'check_linkedin_tokens': {
-#         'task': 'socialmedia.tasks.check_linkedin_tokens',
-#         'schedule': crontab(minute='*/30'),  # Every 30 minutes
-#     },
-#     'check_tiktok_tokens': {
-#         'task': 'socialmedia.tasks.check_tiktok_tokens',
-#         'schedule': crontab(minute='*/30'),  # Every 30 minutes
-#     },
-#     'check_x_tokens': {
-#         'task': 'socialmedia.tasks.check_x_tokens',
-#         'schedule': crontab(minute='*/30'),  # Every 30 minutes
-#     },
-# }
 CELERY_BEAT_SCHEDULE = {
-    "sample_task": {
-        "task": "socialmedia.tasks.sample_task",
-        "schedule": crontab(minute="*/1"),
+    "check_linkedin_tokens": {
+        "task": "socialmedia.tasks.refresh_linkedin_tokens",
+        "schedule": crontab(day_of_week="*", hour="0", minute="0"),
+    },
+    "check_tiktok_tokens": {
+        "task": "socialmedia.tasks.refresh_tiktok_tokens",
+        "schedule": crontab(hour="*/1", minute="0"),
+    },
+    "start_social_media_posting": {
+        "task": "socialmedia.tasks.start_social_media_posting",
+        "schedule": crontab(minute="*/5"),
     },
 }

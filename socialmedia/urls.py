@@ -28,4 +28,10 @@ urlpatterns = [
     path("verify_tiktok/", views.VerifyTikTokView.as_view(), name="verify_tiktok"),
     path("get_x_auth/", views.GetXAuthorizationURLView.as_view(), name="get_x_auth"),
     path("verify_x/", views.VerifyTwitterView.as_view(), name="verify_x"),
+    path("posts_stats/", views.GetPostStatsView.as_view(), name="verify_x"),
+    path(
+        "user_accounts/",
+        views.GetUserSocialMediaAccountsView.as_view(),
+        name="user_accounts",
+    ),
 ]

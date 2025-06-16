@@ -62,7 +62,7 @@ def refresh_linkedin_access_token(user_linkedin: Linkedin):
     try:
         get_access_and_refresh_tokens.raise_for_status()
     except Exception as e:
-        return None
+        return
     authorization_response = get_access_and_refresh_tokens.json()
     access_token = authorization_response.get("access_token")
     access_token_expiry_seconds = authorization_response.get("expires_in", 0)
@@ -133,7 +133,9 @@ def create_linkedin_content_post(
             posted_content.save()
             return
         posted_content.post_status = PostStatus.ERROR.value
-        posted_content.error_reason = ""
+        posted_content.error_reason = (
+            f"Error while posting to LinkedIn ==> {post_response.text}"
+        )
         posted_content.save()
         return
     except Exception as e:
@@ -197,7 +199,9 @@ def create_linkedin_image_post(
         )
         if register_response.status_code not in [200, 201]:
             posted_content.post_status = PostStatus.ERROR.value
-            posted_content.error_reason = "Failed to register upload"
+            posted_content.error_reason = (
+                f"Failed to register upload ERROR ==> {register_response.text}"
+            )
             posted_content.save()
             return
 
@@ -258,13 +262,15 @@ def create_linkedin_image_post(
         final_post_response = requests.post(
             post_url, headers=post_headers, json=post_body
         )
-        if final_post_response.status_code in [200, 201]:
-            posted_content.post_status = PostStatus.POSTED.value
-            posted_content.is_posted = True
+        if final_post_response.status_code not in [200, 201]:
+            posted_content.post_status = PostStatus.ERROR.value
+            posted_content.error_reason = (
+                f"Failed to create LinkedIn post ==> {final_post_response.text}"
+            )
             posted_content.save()
             return
-        posted_content.post_status = PostStatus.ERROR.value
-        posted_content.error_reason = "Failed to create LinkedIn post"
+        posted_content.post_status = PostStatus.POSTED.value
+        posted_content.is_posted = True
         posted_content.save()
         return
     except Exception as e:

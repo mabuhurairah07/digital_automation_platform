@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from django.contrib.auth.models import User
-from .models import UserUploadedFiles, Linkedin, TikTok, X, Instagram
+from .models import UserUploadedFiles, Linkedin, TikTok, X, Instagram, PostedContent
 from .enums import Platforms
 from .utils import RESPONSE
 import pandas as pd
@@ -16,6 +16,7 @@ import base64
 import hmac
 import hashlib
 from urllib.parse import quote, parse_qsl
+from django.utils import timezone
 import uuid
 import os
 
@@ -111,9 +112,9 @@ class LoginView(APIView):
             )
 
         return RESPONSE(
-            message="Please Provide A UserName",
-            status=False,
-            status_code=404,
+            message="User Authenticated Successfully",
+            status=True,
+            status_code=200,
             response=None,
         )
 
@@ -124,6 +125,8 @@ class GetExcellFileView(APIView):
         social_media_name = request.data.get("socialmedia_name", None)
         is_same = request.data.get("is_same", False)
         user_id = request.data.get("user_id", None)
+        if is_same and isinstance(is_same, str):
+            is_same = True if is_same.lower() == "true" else False
         if not excell_file or not excell_file.name.lower().endswith("xlsx"):
             return RESPONSE(
                 message="No Excell File Provided",
@@ -138,6 +141,16 @@ class GetExcellFileView(APIView):
                 status_code=400,
                 response=None,
             )
+        if user_id and isinstance(user_id, str):
+            try:
+                user_id = int(user_id)
+            except ValueError:
+                return RESPONSE(
+                    message="User ID must be an integer",
+                    status=False,
+                    status_code=400,
+                    response=None,
+                )
         if not is_same and not social_media_name:
             return RESPONSE(
                 message="Either set same for all to True or provide a social media name",
@@ -175,35 +188,54 @@ class GetExcellFileView(APIView):
             df = pd.read_excel(excell_file)
             if not all(col in df.columns for col in mandatory_cols):
                 return RESPONSE(
-                    message="These Cols are neccessary to be present",
+                    message=f"These Cols are neccessary to be present: {mandatory_cols}",
                     status=False,
                     status_code=400,
                     response=None,
                 )
-            df = df[mandatory_cols]
             df.to_csv(csv_path, index=False)
         except Exception as e:
             print(f"Error converting Excel to CSV: {e}")
-            return None
+            return RESPONSE(
+                message="There was an error reading file",
+                status=False,
+                status_code=400,
+                response=e,
+            )
         user_files, created = UserUploadedFiles.objects.get_or_create(user=user)
         if is_same:
+            prev_file = user_files.linkedin_file_path
             user_files.linkedin_file_path = csv_path
             user_files.x_file_path = csv_path
             user_files.tiktok_file_path = csv_path
             user_files.instagram_file_path = csv_path
             user_files.save()
+            if prev_file and os.path.exists(prev_file):
+                os.remove(prev_file)
         elif social_media_name == Platforms.LINKEDIN.value:
+            prev_file = user_files.linkedin_file_path
             user_files.linkedin_file_path = csv_path
             user_files.save()
+            if prev_file and os.path.exists(prev_file):
+                os.remove(prev_file)
         elif social_media_name == Platforms.X.value:
+            prev_file = user_files.x_file_path
             user_files.x_file_path = csv_path
             user_files.save()
+            if prev_file and os.path.exists(prev_file):
+                os.remove(prev_file)
         elif social_media_name == Platforms.INSTAGRAM.value:
+            prev_file = user_files.instagram_file_path
             user_files.instagram_file_path = csv_path
             user_files.save()
+            if prev_file and os.path.exists(prev_file):
+                os.remove(prev_file)
         else:
+            prev_file = user_files.tiktok_file_path
             user_files.tiktok_file_path = csv_path
             user_files.save()
+            if prev_file and os.path.exists(prev_file):
+                os.remove(prev_file)
         return RESPONSE(
             message="File Uploaded Successfully. Please make it suer you upload different file for tiktok",
             status=True,
@@ -250,7 +282,7 @@ class VerifyLinkedInView(APIView):
             )
         access_token = authorization_response.get("access_token")
         access_token_expiry_seconds = authorization_response.get("expires_in", 0)
-        access_token_expiry_datetime = datetime.now() + timedelta(
+        access_token_expiry_datetime = timezone.now().now() + timedelta(
             seconds=access_token_expiry_seconds
         )
         refresh_token = authorization_response.get("refresh_token")
@@ -273,20 +305,19 @@ class VerifyLinkedInView(APIView):
         user_linkedin.token_expires_on = access_token_expiry_datetime
         user_linkedin.refresh_token = refresh_token
         user_linkedin.refresh_token_expires_in = refresh_token_expiry_in_days
-        user_linkedin.is_authenticated = (
-            True
-            if access_token_expiry_datetime >= datetime.now()
-            and refresh_token_expiry_in_days > 3
-            else False
-        )
-        user_linkedin.requires_auth = (
-            False if refresh_token_expiry_in_days > 3 else True
-        )
+        user_linkedin.is_authenticated = True  # (
+        # if access_token_expiry_datetime >= datetime.now()
+        # and refresh_token_expiry_in_days > 3
+        # else False
+        # )
+        user_linkedin.requires_auth = False  # (
+        # False if refresh_token_expiry_in_days > 3 else True
+        # )
         user_linkedin.save()
         return RESPONSE(
             message="Profile Saved SuccessFully",
-            status=False,
-            status_code=400,
+            status=True,
+            status_code=200,
             response=None,
         )
 
@@ -329,7 +360,7 @@ class VerifyTikTokView(APIView):
             )
         access_token = authorization_response.get("access_token")
         access_token_expiry_seconds = authorization_response.get("expires_in", 0)
-        access_token_expiry_datetime = datetime.now() + timedelta(
+        access_token_expiry_datetime = timezone.now().now() + timedelta(
             seconds=access_token_expiry_seconds
         )
         refresh_token = authorization_response.get("refresh_token")
@@ -351,8 +382,8 @@ class VerifyTikTokView(APIView):
         user_tiktok.save()
         return RESPONSE(
             message="Profile Saved SuccessFully",
-            status=False,
-            status_code=400,
+            status=True,
+            status_code=200,
             response=None,
         )
 
@@ -579,4 +610,101 @@ class RefreshAccessTokenView(APIView):
 
 
 class GetPostStatsView(APIView):
-    def get(self, request): ...
+    def get(self, request):
+        user_id = request.query_params.get("user_id", None)
+        if not user_id:
+            return RESPONSE(
+                message="No User ID Provided",
+                status=False,
+                status_code=400,
+                response=None,
+            )
+        user = User.objects.filter(pk=user_id).first()
+        if not user:
+            return RESPONSE(
+                message="No User data found",
+                status=False,
+                status_code=400,
+                response=None,
+            )
+        posted_content = PostedContent.objects.filter(user=user).values(
+            "post_id",
+            "post_type",
+            "post_status",
+            "error_reason",
+            "is_posted",
+            "platform_name",
+        )
+        if not posted_content:
+            return RESPONSE(
+                message="No Posted Content Found",
+                status=False,
+                status_code=404,
+                response=None,
+            )
+        return RESPONSE(
+            message="Post Stats Retrieved Successfully",
+            status=True,
+            status_code=200,
+            response=list(posted_content),
+        )
+
+
+class GetUserSocialMediaAccountsView(APIView):
+    def get(self, request):
+        user_id = request.query_params.get("user_id", None)
+        if not user_id:
+            return RESPONSE(
+                message="No User ID Provided",
+                status=False,
+                status_code=400,
+                response=None,
+            )
+        user = User.objects.filter(pk=user_id).first()
+        if not user:
+            return RESPONSE(
+                message="No User data found",
+                status=False,
+                status_code=400,
+                response=None,
+            )
+        linkedin = Linkedin.objects.filter(user=user).first()
+        tiktok = TikTok.objects.filter(user=user).first()
+        x = X.objects.filter(user=user).first()
+        instagram = Instagram.objects.filter(user=user).first()
+        linkedin = {
+            "profile_id": linkedin.profile_id if linkedin else None,
+            "access_token": linkedin.access_token if linkedin else None,
+            "token_expires_on": (
+                linkedin.token_expires_on.strftime("%Y-%m-%d %H:%M:%S")
+                if linkedin and linkedin.token_expires_on
+                else None
+            ),
+            "is_authenticated": linkedin.is_authenticated if linkedin else False,
+        }
+        tiktok = {
+            "access_token": tiktok.access_token if tiktok else None,
+            "token_expires_on": (
+                tiktok.token_expires_on.strftime("%Y-%m-%d %H:%M:%S")
+                if tiktok and tiktok.token_expires_on
+                else None
+            ),
+            "is_authenticated": tiktok.is_authenticated if tiktok else False,
+        }
+        x = {
+            "profile_id": x.profile_id if x else None,
+            "access_token": x.access_token if x else None,
+            "access_token_secret": x.access_token_secret if x else None,
+            "is_authenticated": x.is_authenticated if x else False,
+        }
+        return RESPONSE(
+            message="User Social Media Accounts Retrieved Successfully",
+            status=True,
+            status_code=200,
+            response={
+                "linkedin": linkedin,
+                "tiktok": tiktok,
+                "x": x,
+                "instagram": None,
+            },
+        )

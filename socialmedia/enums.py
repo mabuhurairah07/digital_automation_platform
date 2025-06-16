@@ -34,9 +34,9 @@ class PostType(Enum):
 
 class Platforms(Enum):
     LINKEDIN = "linkedin"
-    X = "x"
     INSTAGRAM = "instagram"
     TIKTOK = "tiktok"
+    X = "x"
 
     @classmethod
     def values(cls):

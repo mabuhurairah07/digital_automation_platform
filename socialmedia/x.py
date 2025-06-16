@@ -26,7 +26,7 @@ def upload_media_to_x(url: str, x: X):
         print(f"Failed to download media file: {get_file.text}")
         return None
     filename = str(uuid.uuid4())
-    if get_file.name.endswith(".mp4"):
+    if url.lower().endswith((".mp4", ".mov", ".avi", ".mkv")):
         filename += ".mp4"
     else:
         filename += ".jpg"
@@ -110,25 +110,25 @@ def upload_media_to_x(url: str, x: X):
                         )
                         print(f"Processing failed: {error_msg}")
                         return None
-        return media_id
+        return str(media_id) if media_id and not isinstance(media_id, str) else media_id
     else:
         with open(file_path, "rb") as media_file:
+            mime_type, _ = mimetypes.guess_type(file_path)
             try:
                 files = {
                     "media": (
                         media_file.name,
                         media_file.read(),
-                        media_file.content_type,
+                        mime_type or "application/octet-stream",
                     )
                 }
                 data = {"media_category": "tweet_image"}
                 response = requests.post(upload_url, auth=auth, files=files, data=data)
                 if response.status_code == 200:
-                    return (
-                        response.json().get("media_id")
-                        if response.json().get("media_id")
-                        else None
-                    )
+                    media_id = response.json().get("media_id")
+                    if media_id and not isinstance(media_id, str):
+                        media_id = str(media_id)
+                    return media_id if media_id else None
                 print(f"Simple image upload failed: {response.text}")
                 return None
             except Exception as e:
@@ -216,12 +216,12 @@ def create_x_image_or_video_tweet(
     media_id = upload_media_to_x(url, x)
     if not media_id:
         posted_content.post_status = PostStatus.ERROR.value
-        posted_content.error_reason = "Failed to upload media."
+        posted_content.error_reason = "Failed to upload media. No Media Id Returned"
         posted_content.save()
         return
     posted_content.post_status = PostStatus.PROCESSED.value
     posted_content.save()
-    payload["media"] = {"media_ids": [media_id]}
+    payload["media"] = {"media_ids": [str(media_id)]}
     post_content = requests.post(
         f"{settings.TWITTER_BASED_API_URL}2/tweets",
         json=payload,
